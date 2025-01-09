@@ -1,0 +1,121 @@
+function App() {
+  const [lectureHours, setLectureHours] = React.useState(1);
+  const [absenceHours, setAbsenceHours] = React.useState(0);
+  const [result, setResult] = React.useState(null);
+
+  // جدول الساعات المسموحة والحرمان حسب عدد المحاضرات
+  const hoursTable = {
+    1: { allowed: 4, denial: 5 },
+    2: { allowed: 8, denial: 9 },
+    3: { allowed: 12, denial: 13 },
+    4: { allowed: 17, denial: 18 },
+    5: { allowed: 21, denial: 22 },
+    6: { allowed: 25, denial: 26 },
+    7: { allowed: 29, denial: 30 }
+  };
+
+  const calculate = () => {
+    const courseInfo = hoursTable[lectureHours];
+    if (!courseInfo) return;
+
+    const { allowed, denial } = courseInfo;
+    const bonusLimit = allowed * 0.2; // 20% من الساعات المسموح بها للبونص
+    const remainingHours = allowed - absenceHours;
+    const status = absenceHours <= allowed ? 'safe' : 'danger';
+
+    setResult({
+      allowed,
+      denial,
+      remainingHours,
+      status,
+      bonusStatus: absenceHours <= bonusLimit,
+      remainingForBonus: Math.max(0, bonusLimit - absenceHours).toFixed(1),
+      percentage: ((absenceHours / allowed) * 100).toFixed(1),
+      bonusLimit: bonusLimit.toFixed(1)
+    });
+  };
+
+  return (
+    <div dir="rtl" className="min-h-screen bg-gray-100 p-4">
+      <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">حاسبة الغياب والبونص</h1>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-gray-700 mb-2">عدد ساعات المحاضرة في الأسبوع:</label>
+            <select 
+              value={lectureHours}
+              onChange={(e) => setLectureHours(Number(e.target.value))}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              {[1,2,3,4,5,6,7].map(num => (
+                <option key={num} value={num}>{num} ساعات</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-gray-700 mb-2">عدد ساعات غيابك:</label>
+            <input
+              type="number"
+              value={absenceHours}
+              onChange={(e) => setAbsenceHours(Number(e.target.value))}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+              min="0"
+              step="0.5"
+            />
+          </div>
+
+          <button
+            onClick={calculate}
+            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
+          >
+            احسب
+          </button>
+
+          {result && (
+            <div className="mt-6 space-y-3">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="text-center p-2 bg-blue-50 rounded">
+                    <div className="text-sm text-gray-600">الساعات المسموح بها</div>
+                    <div className="font-bold text-xl text-blue-600">{result.allowed}</div>
+                  </div>
+                  <div className="text-center p-2 bg-red-50 rounded">
+                    <div className="text-sm text-gray-600">ساعات الحرمان</div>
+                    <div className="font-bold text-xl text-red-600">{result.denial}</div>
+                  </div>
+                </div>
+
+                <div className="text-lg mb-4">نسبة غيابك: {result.percentage}%</div>
+
+                {/* حالة البونص */}
+                <div className={`p-3 rounded-lg mb-2 ${result.bonusStatus ? 'bg-green-100' : 'bg-red-100'}`}>
+                  <div className={`font-bold mb-1 ${result.bonusStatus ? 'text-green-700' : 'text-red-700'}`}>
+                    {result.bonusStatus ? 'البونص موجود 🎉' : 'تم فقدان البونص ⚠️'}
+                  </div>
+                  <div className="text-sm">
+                    {result.bonusStatus ? 
+                      `باقي لك ${result.remainingForBonus} ساعات قبل فقدان البونص` :
+                      'تجاوزت الحد المسموح به للبونص'
+                    }
+                  </div>
+                </div>
+
+                {/* حالة الحرمان */}
+                <div className={`p-3 rounded-lg ${result.status === 'safe' ? 'bg-green-100' : 'bg-red-100'}`}>
+                  <div className={`font-bold mb-1 ${result.status === 'safe' ? 'text-green-700' : 'text-red-700'}`}>
+                    {result.status === 'safe' ? 
+                      `باقي لك ${result.remainingHours} ساعات قبل الحرمان ✅` :
+                      'تم تجاوز حد الحرمان ❌'
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
